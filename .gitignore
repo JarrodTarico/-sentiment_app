@@ -6,6 +6,13 @@ __pycache__/
 # C extensions
 *.so
 
+# DyanmoDB
+DynamoDBLocal_lib
+*.jar
+
+#Kafka
+kafka*
+
 # Distribution / packaging
 .Python
 build/

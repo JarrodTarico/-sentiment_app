@@ -7,6 +7,15 @@
 
 {% block body %}
 
-<h1>Hello World</h1>
+    <h3>{{ data.title }}</h3>
+    <ul id="item-list">
+        {% for item in data.items %}
+            <li>{{ item }}</li>
+        {% endfor %}
+    </ul>
+
+    <button id="load-more">Wait for more</button>
+
+    <!-- <script src="{{ url_for('static', filename='js/script.js') }}"></script> -->
 
 {% endblock %}
