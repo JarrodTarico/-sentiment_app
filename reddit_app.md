@@ -68,4 +68,17 @@ A great project idea to learn system design while working with **real-time data 
 - **User Notifications**: Allow users to subscribe to specific subreddits or topics and send them notifications when new posts related to their interests appear.
 - **Trending Predictions**: Use machine learning to predict potential future trends based on historical data.
 
-This system would simulate a real-world use case for handling high-throughput data, leveraging a combination of Kafka, NoSQL databases, and caching for efficiency and scalability.
+This system would simulate a real-world use case for handling high-throughput data, leveraging a combination of Kafka, NoSQL databases, and caching for efficiency and scalability.'
+
+# Learnings
+* Websockets
+   - For this project I'm using FlaskIO, I first tried seperating the task of consuming messsages from the queue into a seperate task and then emitting them one by one by using 
+      - ```python 
+            from threads import Thread
+            from FlaskIO import socketio
+            for message in consumer:
+               socketio.emit("new_message", message)
+         ```
+   - But when I moved this processing to a seperate thread it lost context for the connection to client and therefore didn't know which endpoint to use for the socket connection among other things.
+   - Also a way to check what running on a part that may be causes 403 errors when trying to access that port. You would run lsof -i :5000 to see what's running. 
+

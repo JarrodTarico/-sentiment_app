@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebSocket Real-Time Updates</title>
-    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="http://cdn.socket.io/4.0.0/socket.io.min.js"></script>
 </head>
 <body>
     <h3>Real-Time Reddit Posts</h3>
@@ -13,27 +13,29 @@
 
     <script>
         // Connect to WebSocket server, io is inherited from "https://cdn.socket.io/4.0.0/socket.io.min.js" file.
-        const socket = io.connect('http://' + document.domain + ':' + location.port);
+        const socket = io.connect('http://127.0.0.1:5000');
 
-        socket.on('new_message', function(message) {
-            try {
-                // Parse the JSON string into an object
-                const parsedMessage = JSON.parse(message);
-                console.log('CLIENT - Parsed message:', parsedMessage);
-
-                // Render the parsed message
-                const list = document.getElementById('message-list');
-                const item = document.createElement('li');
-                item.innerHTML = `
-                    <strong>Title:</strong> ${parsedMessage.title} <br>
-                    // <strong>Created At:</strong> ${parsedMessage.created_at} <br>
-                    <strong>Comments:</strong> ${parsedMessage.num_comments} <br>
-                    <strong>Upvotes:</strong> ${parsedMessage.upvotes} <br>
-                `;
-                list.appendChild(item);
-            } catch (error) {
-                console.error('CLIENT - Failed to parse message:', message, error);
-            }
+        socket.on('new_message', function(messages) {
+            console.log('CLIENT - messages:', messages);
+            messages.forEach(function(message) {
+                try {
+                    // Render the parsed message
+                    const list = document.getElementById('message-list');
+                    const item = document.createElement('li');
+                    item.innerHTML = `
+                        <strong>Title:</strong> ${message.title} <br>
+                        <strong>Created At:</strong> ${message.created_at} <br>
+                        <strong> Num Comments:</strong> ${message.num_comments} <br>
+                        <strong>Upvotes:</strong> ${message.upvotes} <br>
+                        <strong>Upvotes:</strong> ${message.upvotes} <br>
+                        <strong>Ratio Upvotes/Down Votes:</strong> ${message.upvotes} <br>
+                        `;
+                    list.appendChild(item);
+                } catch (error) {
+                    console.error('CLIENT - Failed to parse message:', message, error);
+                }
+                
+            });
         });
 
         socket.on('connect', () => {

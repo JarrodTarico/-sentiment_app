@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 def text_analysis():
     res = []
-    for submission in reddit.subreddit("stocks").hot(limit=50):
+    for submission in reddit.subreddit("stocks").hot(limit=25):
         timestamp = datetime.fromtimestamp(submission.created_utc)
         creation_date = timestamp.strftime( "%Y-%m-%dT%H:%M:%SZ")
         sentiment = analyzer.polarity_scores(submission.title)
@@ -31,7 +31,6 @@ def text_analysis():
             "sentiment_score": sentiment
         }
         producer.send('reddit-posts', new_val)
-        time.sleep(5)
     producer.flush()
     producer.close()
     return res
