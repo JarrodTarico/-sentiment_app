@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Real-Time Updates</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+</head>
+<body>
+    <h3>Real-Time Reddit Posts</h3>
+    <ul id="message-list"></ul>
+    <button id="start-stream">Start Stream</button>
+
+    <script>
+        // Connect to WebSocket server, io is inherited from "https://cdn.socket.io/4.0.0/socket.io.min.js" file.
+        const socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        socket.on('new_message', function(message) {
+            try {
+                // Parse the JSON string into an object
+                const parsedMessage = JSON.parse(message);
+                console.log('CLIENT - Parsed message:', parsedMessage);
+
+                // Render the parsed message
+                const list = document.getElementById('message-list');
+                const item = document.createElement('li');
+                item.innerHTML = `
+                    <strong>Title:</strong> ${parsedMessage.title} <br>
+                    // <strong>Created At:</strong> ${parsedMessage.created_at} <br>
+                    <strong>Comments:</strong> ${parsedMessage.num_comments} <br>
+                    <strong>Upvotes:</strong> ${parsedMessage.upvotes} <br>
+                `;
+                list.appendChild(item);
+            } catch (error) {
+                console.error('CLIENT - Failed to parse message:', message, error);
+            }
+        });
+
+        socket.on('connect', () => {
+            console.log('CLIENT - Connected to WebSocket server');
+        });
+        socket.on('disconnect', () => {
+            console.log('CLIENT - Disconnected from WebSocket server');
+        });        
+
+        // Start the Kafka stream when the button is clicked
+        document.getElementById('start-stream').onclick = function() {
+            socket.emit('start_stream');  // Tell the server to start streaming
+        };
+    </script>
+</body>
+</html>

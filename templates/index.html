@@ -9,7 +9,7 @@
 
     <h3>{{ data.title }}</h3>
     <ul id="item-list">
-        {% for item in data.items %}
+        {% for item in data['items'] %}
             <li>{{ item }}</li>
         {% endfor %}
     </ul>

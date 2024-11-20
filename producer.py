@@ -1,5 +1,4 @@
-#TODO make script to start consumer and producer servers and kafka and zookeeper
-
+import logging
 from flask import Flask, render_template, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -15,12 +14,11 @@ reddit = praw.Reddit(
     client_secret =  "yNFM5rvoCtVsahNwnH0iDHQOxLrElg",
     user_agent = "web:com.sentiment_analyzer:v1 (by u/WasabiApart1914)"
 )
-
-
+logger = logging.getLogger(__name__)
 
 def text_analysis():
     res = []
-    for submission in reddit.subreddit("stocks").hot(limit=100):
+    for submission in reddit.subreddit("stocks").hot(limit=50):
         timestamp = datetime.fromtimestamp(submission.created_utc)
         creation_date = timestamp.strftime( "%Y-%m-%dT%H:%M:%SZ")
         sentiment = analyzer.polarity_scores(submission.title)
@@ -32,13 +30,15 @@ def text_analysis():
             "up_vote_to_down_vote_ratio": float(submission.upvote_ratio),
             "sentiment_score": sentiment
         }
-        res.append(new_val)
-        if len(res) == 5:
-            producer.send('reddit-posts', res)
-            res.clear()
-            time.sleep(3)
+        producer.send('reddit-posts', new_val)
+        time.sleep(5)
     producer.flush()
     producer.close()
     return res
 
-text_analysis()
+def run():
+    logging.basicConfig(filename='myproducer.log', level=logging.INFO)
+    text_analysis()
+
+if __name__ == "__main__":
+    run()
