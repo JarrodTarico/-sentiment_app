@@ -5,7 +5,7 @@ from kafka import KafkaConsumer
 from threading import Thread
 import collections
 import logging
-import producer
+import injestion_layer.reddit_producer as reddit_producer
 import praw, time, json, websockets, asyncio
 
 app = Flask(__name__)
