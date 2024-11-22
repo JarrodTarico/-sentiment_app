@@ -3,6 +3,8 @@ networks:
   elk:
     name: elk
 
+volumes:
+  es_data:
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.16.1
@@ -13,7 +15,16 @@ services:
       - "9200:9200"
       - "9300:9300"
     environment:
-      - discovery.type=single-node
+      - discovery.type=single-node  # Required for non-clustered setups
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g  # Set JVM heap size to avoid memory issues
+      - xpack.security.enabled=false  # (Optional) Disable security for easier setup/testing
+      - xpack.security.http.ssl.enabled=false  # (Optional) Disable SSL for HTTP traffic
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1  # Prevent memory swapping issues
+    volumes:
+      - es_data:/usr/share/elasticsearch/data  # Persist data between restarts
 
   logstash:
     image: docker.elastic.co/logstash/logstash:8.16.1
@@ -21,7 +32,7 @@ services:
     networks:
       - elk
     ports:
-      - "5000:5000"
+      - "5100:5100"
     volumes:
       - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
 

@@ -41,9 +41,9 @@ def stream_to_producer(stock_data):
         producer.send("reddit-posts", stock_data)
         producer.flush()
         producer.close()
-        logger.info(f"Successfully stream data for stock: {stock_data["stock_ticker"]}")
+        logger.info(f"Successfully stream data for stock: {stock_data["stock_ticker"]}", extra={'app': 'RedditIngestor'})
     except Exception as e:
-        logger.info(f"Failed to stream data for stock: {stock_data["stock_ticker"]}, ERROR: {e}")
+        logger.info(f"Failed to stream data for stock: {stock_data["stock_ticker"]}, ERROR: {e}", extra={'app': 'RedditIngestor'})
 
 
 def calc_sentiment_engagement(stocks) -> None:
@@ -59,6 +59,7 @@ def calc_sentiment_engagement(stocks) -> None:
     for stock, submissions in stocks.items():
         # Case: No data from reddit search
         if not submissions:
+            logger.warning(f"No submissions for stock: {stock}", extra={'app': 'RedditIngestor'})
             continue
         total_comments = 0
         avg_sentiment = 0
@@ -75,8 +76,8 @@ def calc_sentiment_engagement(stocks) -> None:
             "avg_sentiment": avg_sentiment
         }
         logger.info(f"Calculated {total_upvotes} total upvotes for stock: {stock}",  extra={'app': 'RedditIngestor','total_upvotes': total_upvotes})
-        logger.info(f"Calculated {total_comments} total comments for stock: {stock}")
-        logger.info(f"Calculated {avg_sentiment} average sentiment for stock: {stock}")
+        logger.info(f"Calculated {total_comments} total comments for stock: {stock}", extra={'app': 'RedditIngestor','total_comments': total_comments})
+        logger.info(f"Calculated {avg_sentiment} average sentiment for stock: {stock}", extra={'app': 'RedditIngestor','avg_sentiment': avg_sentiment})
         stream_to_producer(insertion_val)
 
 
@@ -85,6 +86,7 @@ def text_analysis() -> None:
     for subreddit_name in subreddits:
         subreddit = reddit.subreddit(subreddit_name)
         for query in stock_queries:
+            logger.info(f"Searching in subreddit: {subreddit_name} with query: {query}", extra={'app': 'RedditIngestor'})
             results = subreddit.search(query=query, limit=1)
             stock_ticker, i = "", 0
             while i < len(query) and query[i].isalpha():
@@ -102,7 +104,7 @@ def text_analysis() -> None:
                 }
                 stock_information[stock_ticker].append(curr_submission)
     
-    logger.info(f"Processed {len(stock_information)} stock tickers.")
+    logger.info(f"Processed {len(stock_information)} stock tickers.", extra={'app': 'RedditIngestor'})
     calc_sentiment_engagement(stock_information)
     return
 
