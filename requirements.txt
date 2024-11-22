@@ -2,5 +2,5 @@ tweepy
 praw
 kafka-python
 schedule
-boto3
 python-dotenv
+python-logstash-async

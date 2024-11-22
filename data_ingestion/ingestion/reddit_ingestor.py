@@ -4,29 +4,83 @@ from datetime import datetime
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from kafka import KafkaProducer
 from data_ingestion.config.reddit_config import REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET
+from logstash_async.handler import AsynchronousLogstashHandler
+from logstash_async.formatter import LogstashFormatter
+
 import praw, time, json, collections, logging
 
 producer = KafkaProducer(bootstrap_servers='localhost:9092', value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-analyzer = SentimentIntensityAnalyzer()
+vader_sentiment = SentimentIntensityAnalyzer()
+
+logstash_handler = AsynchronousLogstashHandler(
+    host='localhost',
+    port=5000,
+    database_path='./logstash.db'
+)
+
+logstash_handler.setFormatter(LogstashFormatter())
+logger = logging.getLogger('logstash')
+logger.addHandler(logstash_handler)
+
 reddit = praw.Reddit(
     client_id =  REDDIT_CLIENT_ID,
     client_secret =  REDDIT_CLIENT_SECRET,
     user_agent = "web:com.sentiment_analyzer:v1 (by u/WasabiApart1914)"
 )
 
+
+
 logger = logging.getLogger(__name__)
 
 subreddits = ["stocks", "investing", "wallstreetbets"]
 stock_queries = ["AAPL OR Apple", "CRM OR Salesforce", "AMZN OR Amazon"]
 
-def calc_sentiment(stocks):
-    # also calculate the total num of comments
-    pass
 
-def stream_to_producer(stocks):
-    pass
+def stream_to_producer(stock_data):
+    try:
+        producer.send("reddit-posts", stock_data)
+        producer.flush()
+        producer.close()
+        logger.info(f"Successfully stream data for stock: {stock_data["stock_ticker"]}")
+    except Exception as e:
+        logger.info(f"Failed to stream data for stock: {stock_data["stock_ticker"]}, ERROR: {e}")
 
-def text_analysis():
+
+def calc_sentiment_engagement(stocks) -> None:
+    """
+    Calculate sentiment and engagement metrics for each stock's submissions.
+
+    Args:
+        stocks (dict): A dictionary where keys are stock tickers and values are lists of submission dictionaries.
+
+    Returns:
+        None. Sends aggregated metrics to Kafka.
+    """    
+    for stock, submissions in stocks.items():
+        # Case: No data from reddit search
+        if not submissions:
+            continue
+        total_comments = 0
+        avg_sentiment = 0
+        total_upvotes = 0
+        for submission in submissions:
+            total_comments += submission["num_comments"]
+            avg_sentiment += vader_sentiment.polarity_scores(submission["title_body"])
+            total_upvotes += submission["upvotes"]
+        avg_sentiment = (avg_sentiment) / len(submission)
+        insertion_val = {
+            "stock_ticker": stock,
+            "upvotes": total_upvotes,
+            "num_comments": total_comments,
+            "avg_sentiment": avg_sentiment
+        }
+        logger.info(f"Calculated {total_upvotes} total upvotes for stock: {stock}",  extra={'app': 'RedditIngestor','total_upvotes': total_upvotes})
+        logger.info(f"Calculated {total_comments} total comments for stock: {stock}")
+        logger.info(f"Calculated {avg_sentiment} average sentiment for stock: {stock}")
+        stream_to_producer(insertion_val)
+
+
+def text_analysis() -> None:
     stock_information = collections.defaultdict(list)
     for subreddit_name in subreddits:
         subreddit = reddit.subreddit(subreddit_name)
@@ -43,12 +97,15 @@ def text_analysis():
                     "url": submission.url,
                     "body": submission.selftext,
                     "num_comments": int(submission.num_comments),
-                    "upvotes": int(submission.score),                    
+                    "upvotes": int(submission.score),
+                    "title_body": f"{submission.title} \n {submission.selftext}"                   
                 }
-                stock_information[stock_ticker].append(curr_submission)                      
-    producer.flush()
-    producer.close()
-    # return res
+                stock_information[stock_ticker].append(curr_submission)
+    
+    logger.info(f"Processed {len(stock_information)} stock tickers.")
+    calc_sentiment_engagement(stock_information)
+    return
+
 
 def run():
     logging.basicConfig(filename='logs/reddit_injestion.log', level=logging.INFO)
