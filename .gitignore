@@ -191,6 +191,6 @@ logs/
 *.bak
 *.tmp
 ~*
-
+*.venu/*
 #Personal Files
 real_time_social_media_sentiment_tracker.md

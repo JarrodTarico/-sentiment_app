@@ -6,16 +6,23 @@ from kafka import KafkaProducer
 from data_ingestion.config.reddit_config import REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET
 from logstash_async.handler import AsynchronousLogstashHandler
 from logstash_async.formatter import LogstashFormatter
-
+from logstash_async.transport import TcpTransport
 import praw, time, json, collections, logging
+
+
 
 producer = KafkaProducer(bootstrap_servers='localhost:9092', value_serializer=lambda v: json.dumps(v).encode('utf-8'))
 vader_sentiment = SentimentIntensityAnalyzer()
 
+
 logstash_handler = AsynchronousLogstashHandler(
-    host='localhost',
-    port=5000,
-    database_path='./logstash.db'
+    host='192.168.1.166',
+    port=5100,
+    database_path='./logstash.db',
+    ssl_enable=False,
+    ssl_verify=False,
+    transport=TcpTransport,
+    transport_options={'timeout': 60}
 )
 
 logstash_handler.setFormatter(LogstashFormatter())
@@ -29,9 +36,6 @@ reddit = praw.Reddit(
 )
 
 
-
-logger = logging.getLogger(__name__)
-
 subreddits = ["stocks", "investing", "wallstreetbets"]
 stock_queries = ["AAPL OR Apple", "CRM OR Salesforce", "AMZN OR Amazon"]
 
@@ -41,9 +45,9 @@ def stream_to_producer(stock_data):
         producer.send("reddit-posts", stock_data)
         producer.flush()
         producer.close()
-        logger.info(f"Successfully stream data for stock: {stock_data["stock_ticker"]}", extra={'app': 'RedditIngestor'})
+        logger.info(f"Successfully stream data for stock: {stock_data['stock_ticker']}", extra={'app': 'RedditIngestor'})
     except Exception as e:
-        logger.info(f"Failed to stream data for stock: {stock_data["stock_ticker"]}, ERROR: {e}", extra={'app': 'RedditIngestor'})
+        logger.error(f"Failed to stream data for stock: {stock_data['stock_ticker']}, ERROR: {e}", extra={'app': 'RedditIngestor'})
 
 
 def calc_sentiment_engagement(stocks) -> None:
@@ -66,7 +70,8 @@ def calc_sentiment_engagement(stocks) -> None:
         total_upvotes = 0
         for submission in submissions:
             total_comments += submission["num_comments"]
-            avg_sentiment += vader_sentiment.polarity_scores(submission["title_body"])
+            sentiment_obj = vader_sentiment.polarity_scores(submission["title_body"])
+            avg_sentiment += sentiment_obj["compound"]
             total_upvotes += submission["upvotes"]
         avg_sentiment = (avg_sentiment) / len(submission)
         insertion_val = {
@@ -110,7 +115,7 @@ def text_analysis() -> None:
 
 
 def run():
-    logging.basicConfig(filename='logs/reddit_injestion.log', level=logging.INFO)
+    logging.basicConfig(filename='logs/reddit_ingestion.log', level=logging.INFO)
     text_analysis()
 
 if __name__ == "__main__":

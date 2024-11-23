@@ -4,3 +4,7 @@ kafka-python
 schedule
 python-dotenv
 python-logstash-async
+vaderSentiment
+python-dotenv
+logstash-async
+python-logstash-async
