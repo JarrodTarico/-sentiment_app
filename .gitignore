@@ -6,9 +6,6 @@ __pycache__/
 # C extensions
 *.so
 
-# DyanmoDB
-DynamoDBLocal_lib
-*.jar
 
 #Kafka
 kafka*
@@ -191,6 +188,6 @@ logs/
 *.bak
 *.tmp
 ~*
-*.venu/*
+jarrod_land
 #Personal Files
 real_time_social_media_sentiment_tracker.md

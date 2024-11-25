@@ -5,6 +5,7 @@ networks:
 
 volumes:
   es_data:
+  cassandra_data:  
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.16.1
@@ -43,3 +44,15 @@ services:
       - elk
     ports:
       - "5601:5601"
+
+  cassandra_db:
+    image: cassandra:4.1  # Specify the Cassandra version
+    container_name: cassandra
+    networks:
+      - elk
+    ports:
+      - "9042:9042" 
+    environment:
+      - CASSANDRA_CLUSTER_NAME=Sentiment_App
+    volumes:
+      - cassandra_data:/var/lib/cassandra  # Persist Cassandra data

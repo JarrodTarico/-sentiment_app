@@ -1,5 +1,5 @@
 #!/bin/bash
-cd kafka_2.13-3.9.0
+cd ../../dependencies/kafka_2.13-3.9.0
 
 #start zookeeper
 bin/zookeeper-server-start.sh config/zookeeper.properties    

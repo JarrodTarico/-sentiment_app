@@ -4,30 +4,16 @@ from datetime import datetime
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from kafka import KafkaProducer
 from data_ingestion.config.reddit_config import REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET
-from logstash_async.handler import AsynchronousLogstashHandler
-from logstash_async.formatter import LogstashFormatter
-from logstash_async.transport import TcpTransport
 import praw, time, json, collections, logging
+import data_ingestion.utils.logger as logger
 
+
+logger = logger.get_logger("logstash_reddit")
 
 
 producer = KafkaProducer(bootstrap_servers='localhost:9092', value_serializer=lambda v: json.dumps(v).encode('utf-8'))
 vader_sentiment = SentimentIntensityAnalyzer()
 
-
-logstash_handler = AsynchronousLogstashHandler(
-    host='192.168.1.166',
-    port=5100,
-    database_path='./logstash.db',
-    ssl_enable=False,
-    ssl_verify=False,
-    transport=TcpTransport,
-    transport_options={'timeout': 60}
-)
-
-logstash_handler.setFormatter(LogstashFormatter())
-logger = logging.getLogger('logstash')
-logger.addHandler(logstash_handler)
 
 reddit = praw.Reddit(
     client_id =  REDDIT_CLIENT_ID,
@@ -43,8 +29,6 @@ stock_queries = ["AAPL OR Apple", "CRM OR Salesforce", "AMZN OR Amazon"]
 def stream_to_producer(stock_data):
     try:
         producer.send("reddit-posts", stock_data)
-        producer.flush()
-        producer.close()
         logger.info(f"Successfully stream data for stock: {stock_data['stock_ticker']}", extra={'app': 'RedditIngestor'})
     except Exception as e:
         logger.error(f"Failed to stream data for stock: {stock_data['stock_ticker']}, ERROR: {e}", extra={'app': 'RedditIngestor'})
@@ -84,7 +68,8 @@ def calc_sentiment_engagement(stocks) -> None:
         logger.info(f"Calculated {total_comments} total comments for stock: {stock}", extra={'app': 'RedditIngestor','total_comments': total_comments})
         logger.info(f"Calculated {avg_sentiment} average sentiment for stock: {stock}", extra={'app': 'RedditIngestor','avg_sentiment': avg_sentiment})
         stream_to_producer(insertion_val)
-
+    producer.flush()
+    producer.close()
 
 def text_analysis() -> None:
     stock_information = collections.defaultdict(list)
@@ -92,7 +77,7 @@ def text_analysis() -> None:
         subreddit = reddit.subreddit(subreddit_name)
         for query in stock_queries:
             logger.info(f"Searching in subreddit: {subreddit_name} with query: {query}", extra={'app': 'RedditIngestor'})
-            results = subreddit.search(query=query, limit=1)
+            results = subreddit.search(query=query, limit=50)
             stock_ticker, i = "", 0
             while i < len(query) and query[i].isalpha():
                 stock_ticker += query[i]
@@ -114,8 +99,7 @@ def text_analysis() -> None:
     return
 
 
-def run():
-    logging.basicConfig(filename='logs/reddit_ingestion.log', level=logging.INFO)
+def run(): 
     text_analysis()
 
 if __name__ == "__main__":

@@ -1,0 +1,2 @@
+cluster_name: sentiment_app
+authenticator: PasswordAuthenticator

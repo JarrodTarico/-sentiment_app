@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 consumer = KafkaConsumer('reddit-posts',
                          bootstrap_servers=['localhost:9092'],
-                         group_id='flask-group',
+                         group_id='reddit-consumer-1',
                          auto_offset_reset='earliest', #if there is no offset avalible for the parition, this resets the offset to the beginning. 
                          value_deserializer=lambda x: json.loads(x.decode('utf-8')))
 
