@@ -77,7 +77,7 @@ def text_analysis() -> None:
         subreddit = reddit.subreddit(subreddit_name)
         for query in stock_queries:
             logger.info(f"Searching in subreddit: {subreddit_name} with query: {query}", extra={'app': 'RedditIngestor'})
-            results = subreddit.search(query=query, limit=50)
+            results = subreddit.search(query=query, limit=1)
             stock_ticker, i = "", 0
             while i < len(query) and query[i].isalpha():
                 stock_ticker += query[i]
