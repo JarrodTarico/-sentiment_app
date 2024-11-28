@@ -20,6 +20,8 @@ services:
   kafka:
     image: confluentinc/cp-kafka:latest
     container_name: kafka
+    mem_limit: 2g
+    cpus: 1.0   
     networks:
       - app_network
     ports:
@@ -27,8 +29,11 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1  
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://172.19.0.7:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper      
 
 
   elasticsearch:
@@ -70,8 +75,10 @@ services:
       - "5601:5601"
 
   cassandra_db:
-    image: cassandra:4.1  # Specify the Cassandra version
+    image: cassandra:4.1
     container_name: cassandra
+    mem_limit: 3g
+    cpus: 2
     networks:
       - app_network
     ports:
@@ -79,4 +86,4 @@ services:
     environment:
       - CASSANDRA_CLUSTER_NAME=Sentiment_App
     volumes:
-      - cassandra_data:/var/lib/cassandra  # Persist Cassandra data
+      - cassandra_data:/var/lib/cassandra
