@@ -64,7 +64,7 @@ def calc_sentiment_engagement(stocks) -> None:
             "upvotes": total_upvotes,
             "num_comments": total_comments,
             "avg_sentiment": avg_sentiment,
-            "timestamp": datetime.now().strftime("%Y:%m:%d:%H:%M:%S")
+            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         }
         logger.info(f"Calculated {total_upvotes} total upvotes for stock: {stock}",  extra={'app': 'RedditIngestor','total_upvotes': total_upvotes})
         logger.info(f"Calculated {total_comments} total comments for stock: {stock}", extra={'app': 'RedditIngestor','total_comments': total_comments})
