@@ -2,9 +2,12 @@ from kafka import KafkaProducer
 from datetime import datetime
 import json, random, time
 import data_ingestion.utils.logger as logger
+import data_ingestion.utils.write_metric_to_prom as prom_writer
 
 logger = logger.get_logger("dummy_producer")
 producer = KafkaProducer(bootstrap_servers='localhost:9092', value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+
+
 def run(delay=5):
     stock_counter = 0
     alphabet=list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -27,10 +30,15 @@ def run(delay=5):
             "avg_sentiment": avg_sentiment
         }
         try:
+            start = datetime.now()
             producer.send(
                     "dummy-topic", insertion_val
-                ).add_callback(on_send_success).add_errback(on_send_failure)            
-            producer.send("dummy-topic", insertion_val)
+                ).add_callback(on_send_success).add_errback(on_send_failure)
+            end = datetime.now()
+            producer_latency = end - start
+            prom_writer.write_metric('producer_latency', producer_latency)
+            logger.info(f"Producer Latency is {producer_latency}", extra={'app': 'dummy_producer'})
+
         except Exception as e:
             logger.info(f"Failed to log dummy message {insertion_val['stock_ticker']}", extra={'app': 'dummy_producer'})
         time.sleep(delay)

@@ -57,7 +57,7 @@ def setup_cassandra_schema():
                 produce_count int, --number of messages produced
                 consume_count int, --number of messages consumed
                 consumer_lag INT, --latest_produced_offset - last_consumed_offset
-                disk_usage FLOAT, --Storage used by the topic/partition in MB or GB
+                disk_usage BIGINT, --Storage used by the topic/partition in MB or GB
                 produce_latency FLOAT, --The time it takes for a producer to send a message to a partition and receive an acknowledgment from the broker
                 consume_latency FLOAT, --The time it takes for a consumer to fetch a message from a parition after it has been written
                 timestamp TIMESTAMP,

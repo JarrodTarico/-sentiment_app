@@ -6,6 +6,7 @@ volumes:
   kafka_data:
   cassandra_data:  
   es_data:
+  redis_data:
 
 services:
   zookeeper:
@@ -125,3 +126,12 @@ services:
       - CASSANDRA_CLUSTER_NAME=Sentiment_App
     volumes:
       - cassandra_data:/var/lib/cassandra
+
+  redis:
+    image: redis:7.0
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]

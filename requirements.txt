@@ -3,6 +3,7 @@ cassandra-driver==3.29.2
 certifi==2024.8.30
 charset-normalizer==3.4.0
 click==8.1.7
+confluent-kafka==2.6.1
 Deprecated==1.2.15
 Flask==3.1.0
 Flask-SQLAlchemy==3.1.1
@@ -18,6 +19,7 @@ oauthlib==3.2.2
 packaging==24.2
 praw==7.8.1
 prawcore==2.4.0
+prometheus_client==0.21.1
 pylogbeat==2.0.1
 python-dotenv==1.0.1
 python-logstash==0.4.8
